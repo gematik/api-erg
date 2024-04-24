@@ -1,0 +1,114 @@
+swagger: "2.0"
+info:
+  title: E-Rechnung Permission-API
+  description: |
+    Allows to handle permissions in the context of the E-Rechnung application. Currently getting, updating and deleting permissions that affect the current user are supported.
+  version: 1.0.0
+schemes:
+  - https
+definitions:
+  Entity:
+    type: object
+    properties:
+      id:
+        type: string
+      display:
+        type: string
+  Permission:
+    type: object
+    required:
+      - id
+      - type
+      - status
+      - berechtigter
+      - betroffener
+    properties:
+      id:
+        type: string
+      typ:
+        type: string
+        enum: [Rechnungsempfang]
+      status:
+        type: string
+        enum: [granted, revoked]
+      berechtigter:
+        $ref: "#/definitions/Entity"
+      betroffener:
+        $ref: "#/definitions/Entity"
+  PermissionUpdate:
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        enum: [granted, revoked]
+  PermissionCreate:
+    type: object
+    required:
+      - type
+      - status
+      - berechtigter
+    properties:
+      typ:
+        type: string
+        enum: [Rechnungsempfang]
+      status:
+        type: string
+        enum: [granted, revoked]
+      berechtigter:
+        $ref: "#/definitions/Entity"
+  PermissionList:
+    type: object
+    required:
+      - permissions
+    properties:
+      permissions:
+        type: array
+        items:
+          $ref: "#/definitions/Permission"
+paths:
+  /own-permission:
+    get:
+      summary: Returns a list of set permissions.
+      description: Get a list of all permissions created by the current user.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/PermissionList"
+        401:
+          description: Unauthorized
+  /own-permission/{id}:
+    patch:
+      summary: Update an existing persmission
+      description: Update an existing permission where the current user is the `betroffener` one.
+      parameters:
+        - name: pathparameter
+          in: path
+          required: true
+          description: Permission ID
+          type: integer
+        - name: bodyparameter
+          in: body
+          description: Permission update
+          schema:
+            $ref: "#/definitions/PermissionUpdate"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Permission"
+    delete:
+      summary: Delete a permission
+      parameters:
+        - name: pathparameter
+          in: path
+          required: true
+          description: Permission ID
+          type: integer
+      responses:
+        204:
+          description: Deleted
