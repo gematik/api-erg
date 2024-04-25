@@ -1,110 +1,142 @@
 swagger: "2.0"
 info:
-  title: E-Rechnung Permission-API
+  title: E-Rechnung API
   description: |
-    Allows to handle permissions in the context of the E-Rechnung application. Currently getting, updating and deleting permissions that affect the current user are supported.
+    Diese Schnittstelle beschreibt das Verhalten des E-Rechnung-Fachdienst. Diese Spezifikation ist ergänzend zu der FHIR-Spezifikation zu sehen.
   version: 1.0.0
 schemes:
   - https
 definitions:
+  Status:
+    type: string
+    description: Status der Berechtigung
+    enum: [granted, revoked]
+  PermissionType:
+    type: string
+    description: Typ der Berechtigung
+    enum: [RV-Berechtigung]
   Entity:
     type: object
+    description: Nutzer, kann ein Versicherter oder eine Institution sein
+    required:
+      - id
     properties:
       id:
         type: string
+        description: KVNR oder Telematik-ID
       display:
         type: string
+        description: Anzeigename
   Permission:
     type: object
+    description: Berechtigung
     required:
       - id
       - type
       - status
-      - berechtigter
+      - initiator
       - betroffener
+      - berechtigter
     properties:
       id:
         type: string
       typ:
-        type: string
-        enum: [Rechnungsempfang]
+        $ref: "#/definitions/PermissionType"
       status:
-        type: string
-        enum: [granted, revoked]
-      berechtigter:
+        $ref: "#/definitions/Status"
+      initiator:
+        $ref: "#/definitions/Entity"
+      bestaetiger:
         $ref: "#/definitions/Entity"
       betroffener:
         $ref: "#/definitions/Entity"
-  PermissionUpdate:
-    type: object
-    required:
-      - status
-    properties:
-      status:
-        type: string
-        enum: [granted, revoked]
+      berechtigter:
+        $ref: "#/definitions/Entity"
   PermissionCreate:
     type: object
     required:
       - type
       - status
+      - betroffener
       - berechtigter
     properties:
       typ:
-        type: string
-        enum: [Rechnungsempfang]
+        $ref: "#/definitions/PermissionType"
       status:
-        type: string
-        enum: [granted, revoked]
+        $ref: "#/definitions/Status"
+      betroffener:
+        $ref: "#/definitions/Entity"
       berechtigter:
         $ref: "#/definitions/Entity"
-  PermissionList:
-    type: object
-    required:
-      - permissions
-    properties:
-      permissions:
-        type: array
-        items:
-          $ref: "#/definitions/Permission"
+
 paths:
-  /own-permission:
+  /permission:
     get:
-      summary: Returns a list of set permissions.
-      description: Get a list of all permissions created by the current user.
+      summary: Hole alle Berechtigungen
+      description: Liefert eine Liste aller Berechtigungen bei denen der Nutzer entweder Initiator, Bestätiger, Betroffener oder Berechtigter ist.
+      tags:
+        - Berechtigungen
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: role
+          description: Nur Berechtigungen anzeigen, bei denen der Nutzer folgende Rolle besitzt
+          required: false
+          type: string
+          enum: [initiator, bestaetiger, betroffener, berechtigter]
+        - in: query
+          name: not-confirmed
+          description: Nur Berechtigungen anzeigen, die noch nicht bestätigt wurden
+          type: boolean
       responses:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/PermissionList"
+            type: object
+            required:
+              - permissions
+            properties:
+              permissions:
+                type: array
+                items:
+                  $ref: "#/definitions/Permission"
+        400:
+          description: Bad Request
         401:
           description: Unauthorized
-  /own-permission/{id}:
-    patch:
-      summary: Update an existing persmission
-      description: Update an existing permission where the current user is the `betroffener` one.
+    post:
+      summary: Erstelle eine Berechtigung
+      description: Erstellt eine Berechtigung. Der aktuelle Nutzer wird automatisch der Initiator.
+      tags:
+        - Berechtigungen
+      consumes:
+        - application/json
+      produces:
+        - application/json
       parameters:
-        - name: pathparameter
-          in: path
-          required: true
-          description: Permission ID
-          type: integer
-        - name: bodyparameter
+        - name: permission
           in: body
-          description: Permission update
+          required: true
           schema:
-            $ref: "#/definitions/PermissionUpdate"
+            $ref: "#/definitions/PermissionCreate"
       responses:
-        200:
-          description: OK
+        201:
+          description: Created
           schema:
             $ref: "#/definitions/Permission"
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+  /permission/{id}:
     delete:
-      summary: Delete a permission
+      summary: Lösche eine Berechtigung
+      description: Löscht eine Berechtigung sofern dies für den Nutzer erlaubt ist.
+      tags:
+        - Berechtigungen
       parameters:
-        - name: pathparameter
+        - name: permission-id
           in: path
           required: true
           description: Permission ID
@@ -112,3 +144,43 @@ paths:
       responses:
         204:
           description: Deleted
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+        404:
+          description: Not Found
+  /permission/{id}/status:
+    post:
+      summary: Setze den Status einer Berechtigung
+      description: Gewährt oder verweigert eine Berechtigung.
+      tags:
+        - Berechtigungen
+      consumes:
+        - text/plain
+      produces:
+        - application/json
+      parameters:
+        - name: permission-id
+          in: path
+          required: true
+          description: Permission ID
+          type: integer
+        - name: status
+          in: body
+          description: Neuer Status der gesetzt werden soll
+          schema:
+            $ref: "#/definitions/Status"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Permission"
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+        404:
+          description: Not Found
