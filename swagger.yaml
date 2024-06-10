@@ -136,7 +136,7 @@ paths:
       tags:
         - Berechtigungen
       parameters:
-        - name: permission-id
+        - name: id
           in: path
           required: true
           description: Permission ID
@@ -161,7 +161,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: permission-id
+        - name: id
           in: path
           required: true
           description: Permission ID
