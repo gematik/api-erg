@@ -129,6 +129,8 @@ paths:
           description: Bad Request
         401:
           description: Unauthorized
+        403:
+          description: Forbidden
   /permission/{id}:
     delete:
       summary: Lösche eine Berechtigung
