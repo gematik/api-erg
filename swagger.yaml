@@ -3,7 +3,7 @@ info:
   title: E-Rechnung API
   description: |
     Diese Schnittstelle beschreibt das Verhalten des E-Rechnung-Fachdienst. Diese Spezifikation ist ergänzend zu der FHIR-Spezifikation zu sehen.
-  version: 1.0.0
+  version: 1.0.0-cc
 schemes:
   - https
 definitions:
