@@ -3,7 +3,7 @@ info:
   title: E-Rechnung API
   description: |
     Diese Schnittstelle beschreibt das Verhalten des E-Rechnung-Fachdienst. Diese Spezifikation ist ergänzend zu der FHIR-Spezifikation zu sehen.
-  version: 1.0.0
+  version: 1.0.0-cc
 schemes:
   - https
 definitions:
@@ -129,6 +129,8 @@ paths:
           description: Bad Request
         401:
           description: Unauthorized
+        403:
+          description: Forbidden
   /permission/{id}:
     delete:
       summary: Lösche eine Berechtigung
@@ -136,7 +138,7 @@ paths:
       tags:
         - Berechtigungen
       parameters:
-        - name: permission-id
+        - name: id
           in: path
           required: true
           description: Permission ID
@@ -161,7 +163,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: permission-id
+        - name: id
           in: path
           required: true
           description: Permission ID
